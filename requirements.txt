@@ -1,0 +1,5 @@
+litellm~=1.58.2
+fastapi~=0.115.6
+pyyaml~=6.0.2
+uvicorn~=0.32.1
+starlette~=0.41.3

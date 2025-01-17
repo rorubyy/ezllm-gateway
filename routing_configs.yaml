@@ -1,0 +1,11 @@
+model_list:
+  - model_name: llama3.1
+    litellm_params:
+      model: openai/llama3.1
+      api_base: http://10.34.124.114:11434/v1
+      api_key: "sk-1234"
+  - model_name: llama-3.1-8b-instruct
+    litellm_params:
+      model: openai/llama-3.1-8b-instruct
+      api_base: https://llama3-8b.mlops-whq.k8s.wistron.com'
+      api_key: sk-TYi1oIG49Z
