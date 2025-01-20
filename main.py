@@ -1,6 +1,5 @@
 import json
 import os
-import urllib.parse
 
 import yaml
 from fastapi import FastAPI, Depends, HTTPException, status, Request
@@ -109,7 +108,7 @@ async def chat_completion(request: Request):
 
     # *** 處理LLM Api呼叫與routing
     try:
-        response = route_handler.chat_completion(**req_body)
+        response = route_handler.completion(**req_body)
         # 判斷是否要處理streaming的response
         if 'stream' in req_body and req_body['stream']==True:
             return StreamingResponse(streaming_chunk_generator(response), media_type='text/event-stream')

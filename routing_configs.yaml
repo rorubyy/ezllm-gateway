@@ -1,11 +1,11 @@
 model_list:
-  - model_name: ollama/llama3.1
+  - model_name: qwen2_5-1_5b
     litellm_params:
-      model: openai/llama3.1
-      api_base: http://10.34.124.114:11434/v1
-      api_key: "sk-1234"
-  - model_name: vllm/llama-3.1-8b-instruct
+      model: openai/qwen2_5-1_5b
+      api_base: https://qwen1-5b.mlops-wzs.k8s.wistron.com/v1
+      api_key: token-abc123
+  - model_name: qwen2_5-7b
     litellm_params:
-      model: hosted_vllm/llama-3.1-8b-instruct
-      api_base: https://llama3-8b.mlops-whq.k8s.wistron.com/v1
-      api_key: sk-TYi1oIG49Z
+      model: openai/qwen2_5-7b
+      api_base: https://qwen7b.mlops-wzs.k8s.wistron.com/v1
+      api_key: token-abc123
