@@ -3,7 +3,7 @@ from fastapi import HTTPException
 
 import litellm
 
-# 跳過對後端 LLM Api 的 SSL 憑證的驗證(Todo: Use config to enable/disable)
+# 跳過對後端 LLM Api 的 SSL 憑證的驗證
 litellm.client_session = httpx.Client(verify=False)
 
 # 用來處理chat completion與text generation的LLM Api proxy路由
