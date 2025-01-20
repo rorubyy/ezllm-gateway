@@ -1,5 +1,7 @@
 import json
 import os
+import urllib.parse
+
 import yaml
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
@@ -81,11 +83,14 @@ def master_token_auth(api_token: str = Depends(oauth2_schema)):
 def streaming_chunk_generator(response)->StreamingResponse:
     for chunk in response:
         # Convert ModelResponseStream to json text and return back to client
-        yield f"data: {json.dumps(chunk.json())}\n\n"
+        yield f"data: {json.dumps(chunk.model_dump_json())}\n\n"
 
 # 構建一個 "/chat/completions" 的 api route 來處理 chat completion 的 LLM API 呼叫
 @app.post("/chat/completions", dependencies=[Depends(user_token_auth)])
-async def completion(request: Request):
+@app.post("/v1/chat/completions", dependencies=[Depends(user_token_auth)])
+@app.post("/completions", dependencies=[Depends(user_token_auth)])
+@app.post("/v1/completions", dependencies=[Depends(user_token_auth)])
+async def chat_completion(request: Request):
     # 擷取由client端提交的api_token
     api_token = request.headers.get("Authorization").replace("Bearer ", "").strip()
     # 擷取由client端提交request的body
@@ -95,6 +100,7 @@ async def completion(request: Request):
     req_body["user_token"] = api_token
     req_body["routing_configs"] = routing_configs
     req_body["user_configs"] = user_configs
+    req_body["req_url_path"] = request.url.path
     # 判斷使用者是否有設定"stream"的設定
     if "stream" in req_body:
         if type(req_body['stream']) == str:
@@ -103,7 +109,7 @@ async def completion(request: Request):
 
     # *** 處理LLM Api呼叫與routing
     try:
-        response = route_handler.completion(**req_body)
+        response = route_handler.chat_completion(**req_body)
         # 判斷是否要處理streaming的response
         if 'stream' in req_body and req_body['stream']==True:
             return StreamingResponse(streaming_chunk_generator(response), media_type='text/event-stream')
@@ -113,6 +119,23 @@ async def completion(request: Request):
     except Exception as e:
         raise e
 
+# 構建一個 "/v1/models" 的 api route 來返回gateway有配置的llm模型
+@app.get("/v1/models", dependencies=[Depends(user_token_auth)])
+@app.get("/models", dependencies=[Depends(user_token_auth)])
+async def model_list():
+    global routing_configs
+    return dict(
+        data=[
+            {
+                "id": model,
+                "object": "model",
+                "created": 1677610602,
+                "owned_by": "xxxxx",
+            }
+            for model in routing_configs.keys()
+        ],
+        object="list",
+    )
 
 if __name__ == "__main__":
     import uvicorn

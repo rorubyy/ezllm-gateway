@@ -3,8 +3,10 @@ from fastapi import HTTPException
 
 import litellm
 
+# 跳過對後端 LLM Api 的 SSL 憑證的驗證(Todo: Use config to enable/disable)
 litellm.client_session = httpx.Client(verify=False)
 
+# 用來處理chat completion與text generation的LLM Api proxy路由
 def completion(**kwargs) -> litellm.ModelResponse:
     # 取得Gateway的預設 master token
     master_token: str = kwargs.pop("master_token")
@@ -14,6 +16,8 @@ def completion(**kwargs) -> litellm.ModelResponse:
     routing_configs: dict = kwargs.pop("routing_configs")
     # 取得user_token所對應到的user_profile
     user_configs: dict = kwargs.pop("user_configs")
+    # 取得request的url路徑可用來判斷呼叫的LLM Api服務
+    req_url_path:str = kwargs.pop("req_url_path")
 
     # 定義一個私有的function來routing llm req并把呼叫llm api的結果回傳
     def _completion()-> litellm.ModelResponse:
@@ -39,20 +43,25 @@ def completion(**kwargs) -> litellm.ModelResponse:
             # *** 透過litellm來呼叫llm的api呼叫 ***
             # 檢查本次的llm req的user_token是否與master_token相同, 如果相同就直接去呼叫後端的llm api
             if user_token == master_token:
-                response = litellm.completion(**kwargs)
+                if req_url_path in ["/completions", "/v1/completions"]:
+                    response = litellm.text_completion(**kwargs)
+                else: # ["/chat/completions", "/v1/chat/completions"]
+                    response = litellm.completion(**kwargs)
             else:
                 # 根據user_token來進行相關有關user的相關驗證或處理
                 user_profile:dict = user_configs[user_token] # {id: 11309006, name: "Ruby Lo", project: test, org: mlx000}
                 # To Be Developing ...
-                response = litellm.completion(**kwargs)
+                if req_url_path in ["/completions", "/v1/completions"]:
+                    response = litellm.text_completion(**kwargs)
+                else:  # ["/chat/completions", "/v1/chat/completions"]
+                    response = litellm.completion(**kwargs)
 
             # 回覆api呼叫結果
             return response
         except Exception as e:
             raise e
 
-    # 把內部_completeion()呼叫的結果回傳
+    # 把內部_completion呼叫的結果回傳
     return _completion()
-
 
 
