@@ -1,11 +1,12 @@
 import json
 import os
 
+import litellm
 import yaml
 from fastapi import FastAPI, Depends, HTTPException, status, Request
-from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
+from litellm.types.utils import ModelResponseStream
 from starlette.responses import StreamingResponse
 
 import route_handler
@@ -80,9 +81,10 @@ def master_token_auth(api_token: str = Depends(oauth2_schema)):
 
 # for streaming
 def streaming_chunk_generator(response)->StreamingResponse:
+    # chunk的class type是ModelResponseStream
     for chunk in response:
         # Convert ModelResponseStream to json text and return back to client
-        yield f"data: {json.dumps(chunk.model_dump_json())}\n\n"
+        yield f"data: {json.dumps(chunk.json())}\n\n"
 
 # 構建一個 "/chat/completions" 的 api route 來處理 chat completion 的 LLM API 呼叫
 @app.post("/chat/completions", dependencies=[Depends(user_token_auth)])
