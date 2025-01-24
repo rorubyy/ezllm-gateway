@@ -8,8 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from litellm.types.utils import ModelResponseStream
 from starlette.responses import StreamingResponse
-
+from prometheus_client import make_asgi_app
 import route_handler
+from integrations.prometheus import PrometheusLogger
 
 # *** 載入相關設定檔案 ***
 
@@ -37,6 +38,9 @@ for user in user_configs_yaml["user_list"]:
 master_token = os.getenv("EZLLM_GATEWAY_MASTER_TOKEN", "sk-ezllm-master-token")
 
 # *** LiteLLM 的實例設定 ***
+prometheusLogger = PrometheusLogger(routing_configs=routing_configs, user_configs=user_configs)
+
+litellm.callbacks = [prometheusLogger]
 
 # *** 構建 fastapi 的實例并進行設定 ***
 app = FastAPI()
@@ -76,6 +80,11 @@ def master_token_auth(api_token: str = Depends(oauth2_schema)):
             detail="invalid admin key",
         )
 
+
+# *** 構建 Prometheus metrics 指標實例 **
+# Add prometheus asgi middleware to route /metrics requests
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 # *** 構建 fastapi 的REST API ***
 
