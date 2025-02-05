@@ -11,7 +11,8 @@ from starlette.responses import StreamingResponse
 from prometheus_client import make_asgi_app
 import route_handler
 from integrations.prometheus import PrometheusLogger
-
+import requests
+import time
 # *** 載入相關設定檔案 ***
 
 # 路由的設定: routing_configs.yaml
@@ -80,6 +81,7 @@ def master_token_auth(api_token: str = Depends(oauth2_schema)):
             detail="invalid admin key",
         )
 
+    
 
 # *** 構建 Prometheus metrics 指標實例 **
 # Add prometheus asgi middleware to route /metrics requests
@@ -100,7 +102,10 @@ def streaming_chunk_generator(response)->StreamingResponse:
 @app.post("/v1/chat/completions", dependencies=[Depends(user_token_auth)])
 @app.post("/completions", dependencies=[Depends(user_token_auth)])
 @app.post("/v1/completions", dependencies=[Depends(user_token_auth)])
+
 async def chat_completion(request: Request):
+    start_time = time.time()
+
     # 擷取由client端提交的api_token
     api_token = request.headers.get("Authorization").replace("Bearer ", "").strip()
     # 擷取由client端提交request的body
@@ -111,6 +116,10 @@ async def chat_completion(request: Request):
     req_body["routing_configs"] = routing_configs
     req_body["user_configs"] = user_configs
     req_body["req_url_path"] = request.url.path
+
+    model_name = req_body.get("model")
+    model_config = routing_configs.get(model_name)
+
     # 判斷使用者是否有設定"stream"的設定
     if "stream" in req_body:
         if type(req_body['stream']) == str:
@@ -126,8 +135,12 @@ async def chat_completion(request: Request):
 
         # 將llm api呼叫的結果回覆給client
         return response
+
     except Exception as e:
+        end_time = time.time()
+        prometheusLogger.log_failure_event(req_body, getattr(e, 'status_code', None), start_time, end_time)
         raise e
+
 
 # 構建一個 "/v1/models" 的 api route 來返回gateway有配置的llm模型
 @app.get("/v1/models", dependencies=[Depends(user_token_auth)])
