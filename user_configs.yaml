@@ -1,7 +1,0 @@
-user_list:
-  - user_token: <USER_TOKEN>
-    user_profile:
-      id: <USER_ID>
-      name: <USER_NAME>
-      project: <PROJECT_NAME>
-      org: <ORG_ID>
