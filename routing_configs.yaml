@@ -1,0 +1,12 @@
+model_list:
+  - model_name: llama3.1-8b-instruct
+    litellm_params:
+      model: openai/llama3.1-8b-instruct
+      api_base: <API_BASE>
+      api_key: <API_KEY>
+
+  - model_name: llama3-guard-8b
+    litellm_params:
+      model: hosted_vllm/llama3-guard-8b
+      api_base: <API_BASE>
+      api_key: <API_KEY>
