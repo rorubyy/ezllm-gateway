@@ -32,7 +32,7 @@ class RouteHandler:
         return user_info
 
 
-    async def completion(self, **kwargs) -> litellm.ModelResponse:
+    async def chat_completion(self, **kwargs) -> litellm.ModelResponse:
         try: 
             master_token, user_token, user_configs, req_url_path, remaining_kwargs = self._extract_request_data(kwargs)
 
@@ -40,11 +40,8 @@ class RouteHandler:
             user_info = self._process_user(user_token, master_token, user_configs)
             updated_kwargs.update(user_info)
 
-            if req_url_path in ["/completions", "/v1/completions"]:
-                response = await litellm.atext_completion(**updated_kwargs)
-            else: # ["/chat/completions", "/v1/chat/completions"]
-                response = await litellm.acompletion(**updated_kwargs)
-            
+
+            response = await litellm.acompletion(**updated_kwargs)
             return response  
         
         except AttributeError as e:
@@ -56,5 +53,25 @@ class RouteHandler:
             # General exception catch to prevent leaking of server errors
             raise HTTPException(status_code=500, detail=e)
 
+
+    async def completion(self, **kwargs) -> litellm.ModelResponse:
+        try: 
+            master_token, user_token, user_configs, req_url_path, remaining_kwargs = self._extract_request_data(kwargs)
+
+            updated_kwargs = self.llm_handler.configure_model_routing(**remaining_kwargs)
+            user_info = self._process_user(user_token, master_token, user_configs)
+            updated_kwargs.update(user_info)
+
+            response = await litellm.atext_completion(**updated_kwargs)
+            return response  
+        
+        except AttributeError as e:
+            # Specifically handle cases where an attribute error occurs
+            detail_msg = f"Attribute error occurred: {str(e)}"
+            raise HTTPException(status_code=400, detail=detail_msg)
+        
+        except Exception as e:
+            # General exception catch to prevent leaking of server errors
+            raise HTTPException(status_code=500, detail=e)
 
 
