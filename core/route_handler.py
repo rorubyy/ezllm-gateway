@@ -27,7 +27,7 @@ class RouteHandler:
             user_info["user"] = "admin"
         else:
             user_profile: dict = user_configs.get(user_token, {})
-            user_info["user"] = str(user_profile.get("id", ""))
+            user_info["user"] = user_profile.get("id", None)
 
         return user_info
 

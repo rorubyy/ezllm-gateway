@@ -1,5 +1,5 @@
 # pytohn == 3.11
-litellm~=1.58.2
+litellm~=1.59.5
 fastapi~=0.115.6
 pyyaml~=6.0.2
 uvicorn~=0.32.1
