@@ -1,8 +1,9 @@
 # pytohn == 3.11
-litellm~=1.58.2
+litellm~=1.59.5
 fastapi~=0.115.6
 pyyaml~=6.0.2
 uvicorn~=0.32.1
 starlette~=0.41.3
 httpx~=0.27.2
 prometheus-client~=0.21.1
+azure-identity

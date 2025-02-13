@@ -234,6 +234,41 @@ class PrometheusLogger(CustomLogger):
 
 
     def log_success_event(self, kwargs, response_obj, start_time, end_time):
+        print(f"Success API Call")
+
+
+    def log_pre_api_call(self, model, messages, kwargs): 
+        print(f"Pre-API Call")
+    
+    def log_post_api_call(self, kwargs, response_obj, start_time, end_time): 
+        print(f"Post-API Call")
+
+
+    def log_failure_event(self, kwargs, response_obj, start_time, end_time):
+        print(f"Failure API Call")
+        try:
+            model = kwargs.get("model", "")
+            user_api_key = kwargs.get("user_token","")
+            user_configs = self.user_configs[user_api_key]
+
+            self.counter_proxy_requests_failed.labels(
+                model=model,
+                project=user_configs.get("project", "default"),
+                org=user_configs.get("org", "default"),
+                user=user_configs.get("id", "default"),
+                status_code=response_obj
+            ).inc()
+
+            # print(f"On Failure")
+        except Exception as e:
+            print(f"Error in log_failure_event: {e}")
+            raise e
+
+
+    #### ASYNC #### - for acompletion/aembeddings
+
+    async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
+        print(f"On Async Success")
         try:
             # unpack kwargs
             standard_logging_payload: Optional[StandardLoggingPayload] = kwargs.get(
@@ -280,36 +315,6 @@ class PrometheusLogger(CustomLogger):
             raise e
 
 
-    def log_pre_api_call(self, model, messages, kwargs): 
-        print(f"Pre-API Call")
-    
-    def log_post_api_call(self, kwargs, response_obj, start_time, end_time): 
-        print(f"Post-API Call")
-
-
-    def log_failure_event(self, kwargs, response_obj, start_time, end_time):
-        try:
-            model = kwargs.get("model", "")
-            user_api_key = kwargs.get("user_token","")
-            user_configs = self.user_configs[user_api_key]
-
-            self.counter_proxy_requests_failed.labels(
-                model=model,
-                project=user_configs.get("project", "default"),
-                org=user_configs.get("org", "default"),
-                user=user_configs.get("id", "default"),
-                status_code=response_obj
-            ).inc()
-
-            # print(f"On Failure")
-        except Exception as e:
-            print(f"Error in log_failure_event: {e}")
-            raise e
-
-    #### ASYNC #### - for acompletion/aembeddings
-
-    async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
-        print(f"On Async Success")
-
     async def async_log_failure_event(self, kwargs, response_obj, start_time, end_time):
         print(f"On Async Failure")
+      
