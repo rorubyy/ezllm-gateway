@@ -7,3 +7,4 @@ starlette~=0.41.3
 httpx~=0.27.2
 prometheus-client~=0.21.1
 azure-identity
+cachetools

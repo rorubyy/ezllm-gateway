@@ -6,6 +6,7 @@ from fastapi import HTTPException
 
 # Skip SSL verification for the backend LLM API
 litellm.client_session = httpx.Client(verify=False)
+litellm.aclient_session = httpx.AsyncClient(verify=False)
 
 class RouteHandler:
     def __init__(self):
