@@ -163,7 +163,10 @@ class PrometheusLogger(CustomLogger):
         start_time: Optional[datetime] = kwargs.get("start_time")
         api_call_start_time = kwargs.get("api_call_start_time", None)
         completion_start_time = kwargs.get("completion_start_time", None)
-
+        print(f"Start Time: {start_time}")
+        print(f"API Call Start Time: {api_call_start_time}")
+        print(f"Completion Start Time: {completion_start_time}")
+        print(f"End Time: {end_time}")
         if (
             completion_start_time is not None
             and isinstance(completion_start_time, datetime)
@@ -235,7 +238,6 @@ class PrometheusLogger(CustomLogger):
 
     def log_success_event(self, kwargs, response_obj, start_time, end_time):
         print(f"Success API Call")
-
 
     def log_pre_api_call(self, model, messages, kwargs): 
         print(f"Pre-API Call")
