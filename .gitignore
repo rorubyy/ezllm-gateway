@@ -170,5 +170,5 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-routing_configs.yaml
-user_configs.yaml
+config/routing_configs.yaml
+config/user_configs.yaml

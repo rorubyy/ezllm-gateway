@@ -1,5 +1,6 @@
 from typing import (Callable, Dict)
 import time
+from cachetools import TTLCache
 from azure.identity import (ClientSecretCredential,
                             DefaultAzureCredential,
                             get_bearer_token_provider)
@@ -45,13 +46,12 @@ class LLMHandler:
 class AzureLLMHandler:
     def __init__(self):
         self.scopes = 'https://cognitiveservices.azure.com/.default'
-        self.token_cache: Dict[str, Dict[str, Any]] = {}
-
+        self.token_cache = TTLCache(maxsize=100, ttl=3000)
 
     def configure_azure_authentication(self, llm_route_config: dict, **kwargs):
         azure_ad_token_provider = llm_route_config.get("azure_ad_token_provider")
         azure_ad_token = llm_route_config.get("azure_ad_token_provider")
-        
+
         if not azure_ad_token and not azure_ad_token_provider:
             azure_ad_token_provider = self.get_azure_ad_token_provider(client_id = llm_route_config.get("client_id"), 
                                                                         tenant_id = llm_route_config.get("tenant_id"), 
@@ -64,17 +64,11 @@ class AzureLLMHandler:
         return kwargs
 
     def _get_cached_token_provider(self, cache_key: str) ->  Callable[[], str]:
-        token_info = self.token_cache.get(cache_key)
-        if token_info and not self._check_expire(token_info):
-            return token_info['azure_ad_token_provider']
-        return None
+        return self.token_cache.get(cache_key)
+    
 
-
-    def _set_cache(self, cache_key: str, azure_ad_token_provider: Callable[[], str], expires_on: int) -> None:
-        self.token_cache[cache_key] = {
-            'azure_ad_token_provider': azure_ad_token_provider,
-            'expires_on': expires_on
-        }
+    def _set_cache(self, cache_key: str, azure_ad_token_provider: Callable[[], str]) -> None:
+        self.token_cache[cache_key] = azure_ad_token_provider
 
     def get_azure_ad_token_provider(self, client_id: str, tenant_id: str, client_secret: str) -> Callable[[], str]:
         cache_key = f"{client_id}_{tenant_id}"
@@ -89,16 +83,9 @@ class AzureLLMHandler:
                 credential = ClientSecretCredential(client_id=client_id, tenant_id=tenant_id, client_secret=client_secret)
                 azure_ad_token_provider = get_bearer_token_provider(credential, self.scopes)
 
-                self._set_cache(cache_key, azure_ad_token_provider, expires_on = credential.get_token(self.scopes)[1])
+                self._set_cache(cache_key, azure_ad_token_provider)
 
             except ValueError as e:
                 print(f"Invalid client credentials: {e}. Using DefaultAzureCredential instead.")
-            credential = DefaultAzureCredential()
 
             return azure_ad_token_provider
-    
-    def _check_expire(self, token_info):
-        current_time = int(time.time())
-        expires_on = token_info.get('expires_on', 0)
-        return expires_on - current_time < 60
-
