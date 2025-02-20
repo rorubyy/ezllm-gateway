@@ -1,12 +1,36 @@
 model_list:
+  - model_name: qwen2_5-1_5b
+    litellm_params:
+      model: openai/qwen2_5-1_5b
+      api_base: https://qwen1-5b.mlops-wzs.k8s.wistron.com/v1
+      api_key: token-abc123
+  - model_name: qwen2_5-7b
+    litellm_params:
+      model: openai/qwen2_5-7b
+      api_base: https://qwen7b.mlops-wzs.k8s.wistron.com/v1
+      api_key: token-abc123
+  - model_name: llama-guard3:8b
+    litellm_params:
+      model: openai/llama-guard3:8b
+      api_base: "https://llama-irving.mlops-wzs.k8s.wistron.com/v1"
+      api_key: token-abc123
   - model_name: llama3.1-8b-instruct
     litellm_params:
-      model: openai/llama3.1-8b-instruct
-      api_base: <API_BASE>
-      api_key: <API_KEY>
+      model: "openai/llama3.1-8b-instruct"
+      api_key: "sk-TYi1oIG49Z"
+      api_base: "https://llama3-8b.mlops-whq.k8s.wistron.com/v1"
 
-  - model_name: llama3-guard-8b
+guardrails:
+  - guardrail_name: "guardrails_ai-pre"
     litellm_params:
-      model: hosted_vllm/llama3-guard-8b
-      api_base: <API_BASE>
-      api_key: <API_KEY>
+      guardrail: guardrails_ai
+      mode: "pre_call"
+      guard_name: "detect_pii"
+      api_base: http://0.0.0.0:8000
+
+  - guardrail_name: "guardrails_ai-post"
+    litellm_params:
+      guardrail: guardrails_ai
+      mode: "post_call"
+      guard_name: "detect_pii"
+      api_base: http://0.0.0.0:8000

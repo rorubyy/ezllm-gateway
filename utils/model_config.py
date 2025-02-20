@@ -1,6 +1,7 @@
-from typing import (Optional, Any, Dict)
+from typing import (Optional, Any, Dict, List)
 import yaml
 import os
+from my_guardrails.init_guardrails import init_guardrails
 
 class ModelConfig:
     def __init__(self) -> None:
@@ -70,15 +71,32 @@ class ModelConfig:
         self.config = config
         return config
 
-
     def load_config(self, config_file_path: str) -> dict:
         config: dict = self.get_config(config_file_path=config_file_path)
 
-        routing_configs = {}
+        model_configs = {}
         model_list = config.get("model_list", None)
         if model_list:
             for model in model_list:
-                routing_configs[model['model_name']] = model['litellm_params']
-        routing_configs = self._check_for_os_environ_vars(routing_configs)
+                model_configs[model['model_name']] = model['litellm_params']
+        model_configs = self._check_for_os_environ_vars(model_configs)
+
+        # Guardrail settings
+        guardrail_configs = {}
+        guardrails: Optional[List[Dict]] = None
+
+        if config is not None:
+            guardrails = config.get("guardrails", None)
+        if guardrails:
+            init_guardrails(
+                all_guardrails=guardrails, config_file_path=config_file_path
+            )
+            for guardrail in guardrails:
+                guardrail_configs[guardrail['guardrail_name']] = guardrail['litellm_params']
+        
+        routing_configs = {
+            "models": model_configs,
+            "guardrails": guardrail_configs
+        }
         
         return routing_configs

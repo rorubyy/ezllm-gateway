@@ -20,8 +20,12 @@ class LLMHandler:
             model_name = kwargs.get("model")
             if model_name is None:
                 raise ValueError("Model must be provided in the kwargs")
-
-            llm_route_config = routing_configs.get(model_name)
+            
+            # Access the 'models' part of routing_configs
+            model_configs = routing_configs.get("models", {})
+            llm_route_config = model_configs.get(model_name)
+            
+            # llm_route_config = routing_configs.get(model_name)
             if llm_route_config is None:
                 raise KeyError(f"No route configuration found for model {model_name}")
 
